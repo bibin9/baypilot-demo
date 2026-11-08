@@ -462,6 +462,15 @@ table.cons td:last-child{background:#eef2ff;font-weight:700}
 .qstep.c{border-color:var(--red);color:var(--red);background:#fff5f5}.qstep.d{border-color:var(--green);color:var(--green);cursor:pointer}.qstep:disabled{cursor:default}.qsep{color:var(--muted)}
 .qline{padding:7px 0;border-bottom:1px solid var(--line2);gap:8px;font-size:13px}.qline input[type=checkbox]{width:18px;height:18px;accent-color:var(--green)}
 @media print{.qsteps{display:none}}
+.dview11{margin:-4px 0 16px}
+.ev11{width:100%;max-width:26px;background:#cbd5e1;border-radius:6px 6px 0 0;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;margin:0 auto}
+.ev11 i{display:block;background:var(--green);width:100%}
+.stk11{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line2)}
+.stk11 i{display:block;height:100%}
+.lg11{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px}
+.lg11 span{display:inline-flex;align-items:center;gap:5px}.lg11 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.fun11{display:flex;align-items:center;gap:10px;background:#1f4fbf;color:#fff;border-radius:8px;padding:9px 12px;margin:0 auto 6px;font-size:13px}
+.fun11:nth-child(3){background:#3b6fe0}.fun11:nth-child(4){background:var(--green)}.fun11 b{margin-left:auto}
 </style>
 </head>
 <body>
@@ -3802,6 +3811,138 @@ leaveTab=function(){const fl=S.lvfl||'Pending';const L=LV().req.filter(r=>(S.bra
  <div class="tiny muted" style="margin-top:8px">Employees apply from <b>My leave</b> (web or the staff phone). The branch manager or HR approves here; the employee sees the answer at once. Balances follow UAE Labour Law.</div></div>
  <div class="card pad"><h3>Leave types</h3>${LVT.map(x=>`<div class="row small" style="padding:5px 0;border-bottom:1px solid var(--line2)"><b>${x[0]}</b><span class="sp"></span><span class="muted" style="text-align:right">${x[2]}</span></div>`).join('')}</div></div>`};
 HOWTO.unshift(['Apply for leave (any employee)','Left menu › Me › My leave: balance, apply, status, cancel','tech',"go('myleave')",'HR-04'],['Approve leave','HR › Leave: approve or reject, see who else is off','manager',"S.tab.hr='leave';go('hrleave')",'HR-04']);
+
+/* ===== r11: owner dashboard — enquiries by branch and branch details ===== */
+function h11(s){let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0}
+function rng11(seed){let x=seed||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296}}
+/* split a total into parts by weights (with per-branch jitter), always summing to the total */
+function split11(total,w,r,j=.35){const ws=w.map(v=>v*(1-j/2+r()*j));const sm=ws.reduce((a,b)=>a+b,0);const ex=ws.map(v=>total*v/sm);const out=ex.map(Math.floor);let left=total-out.reduce((a,b)=>a+b,0);ex.map((v,i)=>[v-out[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(left>0){out[i]++;left--}});return out}
+const PMUL11={day:1,week:6.7,month:27.4};
+const PLBL11={day:'today',week:'last 7 days',month:'last 30 days'};
+const PSUB11={day:'Live · Wednesday 4 November 2026',week:'29 October – 4 November 2026',month:'6 October – 4 November 2026'};
+
+const ESRC=['WhatsApp','Phone','Walk-in','Website','Instagram / social'];
+const ESRCW=[38,27,18,11,6];
+const ESRCC=['#12a150','#1f4fbf','#e48a00','#6d4fd8','#be185d'];
+const EASK=['Periodic service','Brakes','A/C','Tyres','Battery','Diagnostics / warning light','Body & paint','Gearbox'];
+const EASKW=[34,13,12,11,8,10,6,6];
+const ELOST=['Price too high','Went to the dealer','Only asking the price','No reply after quote','Parts wait too long'];
+const ELOSTW=[31,19,22,18,10];
+
+/* enquiry figures for one branch and period */
+function enqStat(b,p){const r=rng11(h11('enq'+b+p));const m=PMUL11[p]||1;const base=BSTAT[b][1];
+ const tot=Math.max(3,Math.round(base*1.55*m*(0.92+r()*.16)));
+ const conv=Math.round(tot*(0.52+r()*.22)),lost=Math.round(tot*(0.10+r()*.10));const open=Math.max(0,tot-conv-lost);
+ const nw=Math.round(open*.45),fol=open-nw;
+ return {b,tot,conv,lost,open,nw,fol,cpct:Math.round(conv/tot*100),src:split11(tot,ESRCW,r),ask:split11(tot,EASKW,r),lostBy:split11(lost,ELOSTW,r),reply:Math.round(5+r()*20),quoted:Math.round(conv+(tot-conv-lost)*.5+lost*.7),value:Math.round(conv*(380+r()*260))}}
+function enqSum(list){const z={tot:0,conv:0,lost:0,open:0,nw:0,fol:0,quoted:0,value:0,src:ESRC.map(()=>0),ask:EASK.map(()=>0),lostBy:ELOST.map(()=>0),rw:0};
+ list.forEach(s=>{['tot','conv','lost','open','nw','fol','quoted','value'].forEach(k=>z[k]+=s[k]);s.src.forEach((v,i)=>z.src[i]+=v);s.ask.forEach((v,i)=>z.ask[i]+=v);s.lostBy.forEach((v,i)=>z.lostBy[i]+=v);z.rw+=s.reply*s.tot});
+ z.cpct=z.tot?Math.round(z.conv/z.tot*100):0;z.reply=z.tot?Math.round(z.rw/z.tot):0;return z}
+
+/* customer demographics for one branch */
+const CTYPE=['Individual','Corporate / fleet','Government','Insurance claim'];
+const CTYPEC=['#1f4fbf','#0e9488','#6d4fd8','#e48a00'];
+const NAT=['Emirati','Indian','Pakistani','Filipino','Egyptian','Other Arab','Western','Other'];
+const NATW={'Abu Dhabi':[30,20,11,8,7,10,9,5],'Al Ain':[46,15,12,4,6,10,2,5],'Sharjah':[14,29,19,9,8,13,2,6],'Dubai':[11,30,16,11,6,10,10,6],'Ajman':[12,27,22,10,9,12,2,6]};
+const MAKE=['Toyota','Nissan','Lexus','Mitsubishi','Hyundai / Kia','Ford / GMC / Chevrolet','German (BMW, Mercedes, Audi)','Other'];
+const MAKEW={'Abu Dhabi':[33,18,9,6,10,9,9,6],'Al Ain':[38,21,10,7,8,8,3,5],'Sharjah':[29,20,4,10,15,8,6,8],'Dubai':[27,17,7,8,14,8,12,7],'Ajman':[28,21,3,11,16,8,5,8]};
+const VAGE=['0–3 years','4–7 years','8–12 years','Over 12 years'];
+const AGEG=['18–25','26–35','36–45','46–55','56+'];
+const RES=['Abu Dhabi','Al Ain','Dubai','Sharjah','Ajman','Other emirates'];
+function custStat(b,p){const B=BR(b),r=rng11(h11('cust'+b)),rp=rng11(h11('custp'+b+p));const m=PMUL11[p]||1;
+ const active=Math.round(BSTAT[b][1]*48*(0.9+r()*.25));
+ const visits=Math.max(1,Math.round(BSTAT[b][1]*m));const newC=Math.max(1,Math.round(visits*(0.22+rp()*.14)));
+ const corpW=b==='YAS'||b==='KHA'||b==='BNY'||b==='MTR'?[66,25,6,3]:[74,17,5,4];
+ const resW={'Abu Dhabi':[78,4,7,3,1,7],'Al Ain':[9,82,2,1,1,5],'Sharjah':[3,1,30,55,7,4],'Dubai':[3,1,66,21,4,5],'Ajman':[2,1,14,32,46,5]}[B.em];
+ const avg=Math.round(BSTAT[b][0]/BSTAT[b][1]);
+ return {b,active,visits,newC,ret:Math.round((visits-newC)/visits*100),type:split11(active,corpW,r,.25),nat:split11(active,NATW[B.em],r),make:split11(active,MAKEW[B.em],r),vage:split11(active,[24,35,27,14],r),age:split11(active,[8,31,30,19,12],r),male:Math.round(84+r()*8),res:split11(active,resW,r,.2),avg,
+  tech:Math.round(B.bays*1.5),util:Math.round(68+r()*24),rating:(4.3+r()*.6).toFixed(1),reviews:Math.round(140+r()*900)}}
+function custSum(list){const z={active:0,visits:0,newC:0,type:CTYPE.map(()=>0),nat:NAT.map(()=>0),make:MAKE.map(()=>0),vage:VAGE.map(()=>0),age:AGEG.map(()=>0),res:RES.map(()=>0),mw:0};
+ list.forEach(s=>{z.active+=s.active;z.visits+=s.visits;z.newC+=s.newC;z.mw+=s.male*s.active;['type','nat','make','vage','age','res'].forEach(k=>s[k].forEach((v,i)=>z[k][i]+=v))});
+ z.ret=Math.round((z.visits-z.newC)/z.visits*100);z.male=Math.round(z.mw/z.active);return z}
+
+/* ---- small chart helpers ---- */
+function hb11(labels,vals,{col,fmtv=v=>fmt(v),lw=150,pct=false,hl}={}){const tot=vals.reduce((a,b)=>a+b,0)||1,mx=Math.max(...vals)||1;
+ return `<div class="bars">${labels.map((l,i)=>`<div class="br" style="grid-template-columns:${lw}px 1fr 78px"><span class="small">${l}</span><div class="bt"><i style="width:${vals[i]/mx*100}%;background:${Array.isArray(col)?col[i%col.length]:col||(hl===i?'var(--red)':'#1f4fbf')}"></i></div><b class="num small">${pct?Math.round(vals[i]/tot*100)+'%':fmtv(vals[i])}${pct?` <span class="tiny muted">${fmt(vals[i])}</span>`:''}</b></div>`).join('')}</div>`}
+function stack11(labels,vals,cols){const tot=vals.reduce((a,b)=>a+b,0)||1;
+ return `<div class="stk11">${vals.map((v,i)=>`<i style="width:${v/tot*100}%;background:${cols[i]}" title="${labels[i]}: ${Math.round(v/tot*100)}%"></i>`).join('')}</div><div class="lg11">${labels.map((l,i)=>`<span><i style="background:${cols[i]}"></i>${l} <b>${Math.round(vals[i]/tot*100)}%</b></span>`).join('')}</div>`}
+const top11=(labels,vals)=>labels[vals.indexOf(Math.max(...vals))];
+
+/* ---- view switcher shown on every owner dashboard view ---- */
+function dviewTabs(){const v=S.dview||'ovr';return `<div class="dview11 tabs">${[['ovr','Overview','dash'],['enq','Enquiries by branch','enq'],['cust','Branch details','users']].map(([k,l,i])=>`<button class="${v===k?'on':''}" onclick="S.dview='${k}';render()">${ic(i,'width:15px;height:15px;vertical-align:-3px;margin-right:5px')}${l}</button>`).join('')}</div>`}
+function dHead11(title){const all=S.branch==='ALL',p=S.dper||'day';
+ return `<div class="ph"><div><h1>${title}</h1><div class="sub">${PSUB11[p]} · ${all?'17 branches across 5 emirates':BR(S.branch).name+', '+BR(S.branch).em}</div></div><span class="sp"></span>
+ <div class="tabs">${[['day','Today'],['week','Last 7 days'],['month','Last 30 days']].map(([k,l])=>`<button class="${p===k?'on':''}" onclick="S.dper='${k}';render()">${l}</button>`).join('')}</div></div>`+dviewTabs()}
+function brRowGo(id){S.branch=id;render();toast(`Showing ${BR(id).name} branch`,'ok','swap')}
+
+/* ---------- Enquiries by branch ---------- */
+function dashEnq(){const all=S.branch==='ALL',p=S.dper||'day',L=PLBL11[p];
+ const brs=all?BRANCHES.map(b=>b.id):[S.branch];const st=brs.map(b=>enqStat(b,p));const z=enqSum(st);
+ const sort=S.esort||'tot';const rows=st.slice().sort((a,b)=>sort==='cpct'?b.cpct-a.cpct:sort==='lost'?b.lost-a.lost:sort==='reply'?a.reply-b.reply:b.tot-a.tot);
+ const live=S.enq.filter(e=>inScope(e.br)&&(e.status==='new'||e.status==='follow'));
+ let h=dHead11(all?'Enquiries by branch':BR(S.branch).name+' — enquiries');
+ h+=`<div class="grid g5" style="margin-bottom:16px">
+  ${kpi('Enquiries '+L,fmt(z.tot),all?'Across 17 branches':'WhatsApp, phone, walk-in, website, social','enq','#1f4fbf')}
+  ${kpi('Turned into jobs',fmt(z.conv),z.cpct+'% conversion · target 60%','check','#12a150',z.cpct>=60?'up':'')}
+  ${kpi('Lost',fmt(z.lost),Math.round(z.lost/z.tot*100)+'% · top reason: '+top11(ELOST,z.lostBy),'alert','#d92d20')}
+  ${kpi('First reply',z.reply+' min','Average time to answer · target 15 min','clock','#e48a00')}
+  ${kpi('Still open',fmt(z.open),z.nw+' new · '+z.fol+' waiting for follow-up','bell','#6d4fd8')}
+ </div>`;
+ if(all){const mx=Math.max(...st.map(s=>s.tot));
+  h+=`<div class="grid g64"><div class="card pad"><h3>Enquiries by branch — ${L} <span class="sp"></span><span class="small muted">Green = turned into a job · click a bar to open the branch</span></h3>
+   <div class="vbars">${st.map(s=>`<div class="vb" style="cursor:pointer" title="${BR(s.b).name}: ${s.tot} enquiries, ${s.conv} converted (${s.cpct}%)" onclick="brRowGo('${s.b}')"><b>${fmt(s.tot)}</b><div class="ev11" style="height:${s.tot/mx*120}px"><i style="height:${s.conv/s.tot*100}%"></i></div><span>${s.b}</span></div>`).join('')}</div></div>
+   <div class="card pad"><h3>Where enquiries come from</h3>${stack11(ESRC,z.src,ESRCC)}<div style="margin-top:14px">${hb11(ESRC,z.src,{col:ESRCC,pct:true,lw:130})}</div></div></div>`;
+  h+=`<div class="card" style="margin-top:16px"><div class="row" style="padding:16px 18px 0"><h3 style="margin:0">Branch by branch — ${L}</h3><span class="sp"></span><span class="small muted">Sort by</span>
+   <div class="tabs">${[['tot','Most enquiries'],['cpct','Best conversion'],['lost','Most lost'],['reply','Fastest reply']].map(([k,l])=>`<button class="${sort===k?'on':''}" onclick="S.esort='${k}';render()">${l}</button>`).join('')}</div></div>
+   <div class="tw"><table class="t" id="enqtbl"><thead><tr><th>Branch</th><th class="num">Enquiries</th>${ESRC.map(s=>`<th class="num">${s.split(' ')[0]}</th>`).join('')}<th class="num">Converted</th><th class="num">Conversion</th><th class="num">Lost</th><th class="num">Reply</th><th class="num">Open</th>${can('price')?'<th class="num">Job value</th>':''}</tr></thead><tbody>
+   ${rows.map(s=>`<tr style="cursor:pointer" onclick="brRowGo('${s.b}')"><td style="white-space:nowrap"><b>${BR(s.b).name}</b><div class="tiny muted">${BR(s.b).em}</div></td><td class="num b">${fmt(s.tot)}</td>${s.src.map(v=>`<td class="num">${fmt(v)}</td>`).join('')}<td class="num">${fmt(s.conv)}</td><td class="num"><span class="chip ${s.cpct>=65?'g':s.cpct>=58?'b':'a'}">${s.cpct}%</span></td><td class="num">${fmt(s.lost)}</td><td class="num" style="color:${s.reply>15?'var(--late)':'inherit'}">${s.reply} min</td><td class="num">${fmt(s.open)}</td>${can('price')?`<td class="num">AED ${fmt(s.value)}</td>`:''}</tr>`).join('')}
+   <tr style="background:var(--bg)"><td class="b">All branches</td><td class="num b">${fmt(z.tot)}</td>${z.src.map(v=>`<td class="num b">${fmt(v)}</td>`).join('')}<td class="num b">${fmt(z.conv)}</td><td class="num b">${z.cpct}%</td><td class="num b">${fmt(z.lost)}</td><td class="num b">${z.reply} min</td><td class="num b">${fmt(z.open)}</td>${can('price')?`<td class="num b">AED ${fmt(z.value)}</td>`:''}</tr></tbody></table></div></div>`;
+  h+=`<div class="grid g3" style="margin-top:16px"><div class="card pad"><h3>What customers ask for</h3>${hb11(EASK,z.ask,{pct:true,lw:170,col:'#0e9488'})}</div>
+   <div class="card pad"><h3>Why enquiries are lost</h3>${hb11(ELOST,z.lostBy,{pct:true,lw:170,col:'#d92d20'})}</div>
+   <div class="card pad"><h3>By emirate</h3>${(()=>{const ems=['Abu Dhabi','Al Ain','Sharjah','Dubai','Ajman'];const e=ems.map(em=>enqSum(st.filter(s=>BR(s.b).em===em)));return `<div class="tw"><table class="t"><thead><tr><th>Emirate</th><th class="num">Enquiries</th><th class="num">Converted</th><th class="num">Reply</th></tr></thead><tbody>${ems.map((em,i)=>`<tr><td class="b">${em}</td><td class="num">${fmt(e[i].tot)}</td><td class="num">${e[i].cpct}%</td><td class="num">${e[i].reply} min</td></tr>`).join('')}</tbody></table></div>`})()}</div></div>`;
+ }else{const s=st[0];const fun=[['Enquiries received',s.tot],['Quotation sent',s.quoted],['Turned into a job card',s.conv]];
+  h+=`<div class="grid g3"><div class="card pad"><h3>From enquiry to job</h3>${fun.map(([l,v],i)=>`<div class="fun11" style="width:${100-i*14}%"><span>${l}</span><b>${fmt(v)}</b><span class="tiny">${Math.round(v/s.tot*100)}%</span></div>`).join('')}<div class="tiny muted" style="margin-top:8px">${fmt(s.lost)} lost · ${fmt(s.open)} still open</div></div>
+   <div class="card pad"><h3>Where enquiries come from</h3>${stack11(ESRC,s.src,ESRCC)}<div style="margin-top:14px">${hb11(ESRC,s.src,{col:ESRCC,pct:true,lw:130})}</div></div>
+   <div class="card pad"><h3>Why enquiries are lost</h3>${hb11(ELOST,s.lostBy,{pct:true,lw:160,col:'#d92d20'})}</div></div>
+   <div class="grid g64" style="margin-top:16px"><div class="card pad"><h3>What customers ask for</h3>${hb11(EASK,s.ask,{pct:true,lw:190,col:'#0e9488'})}</div>
+   <div class="card pad"><h3>Open enquiries now <span class="sp"></span><button class="btn sm" onclick="go('enq')">Open enquiries</button></h3>${live.length?live.map(e=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line2)"><span class="chip ${e.status==='new'?'b':'a'}">${e.status==='new'?'New':'Follow up'}</span><span class="small"><b>${esc(e.name)}</b> · ${esc(e.ask)}</span><span class="sp"></span><span class="tiny muted">${e.src} · ${e.follow}</span></div>`).join(''):'<div class="empty small">No open enquiries at this branch right now</div>'}</div></div>`;
+ }
+ return h}
+
+/* ---------- Branch details (branch by branch) ---------- */
+function dashCust(){const all=S.branch==='ALL',p=S.dper||'day',L=PLBL11[p];
+ const brs=all?BRANCHES.map(b=>b.id):[S.branch];const st=brs.map(b=>custStat(b,p));const z=custSum(st);
+ const m=PMUL11[p]||1;const sales=b=>Math.round(BSTAT[b][0]*m),cin=b=>Math.round(BSTAT[b][1]*m);
+ const avg=Math.round(brs.reduce((a,b)=>a+BSTAT[b][0],0)/brs.reduce((a,b)=>a+BSTAT[b][1],0));
+ const util=Math.round(st.reduce((a,s)=>a+s.util*BR(s.b).bays,0)/st.reduce((a,s)=>a+BR(s.b).bays,0));
+ let h=dHead11(all?'Branch details':BR(S.branch).name+' — branch details');
+ h+=`<div class="grid g5" style="margin-bottom:16px">
+  ${kpi('Bays / technicians',brs.reduce((a,b)=>a+BR(b).bays,0)+' / '+st.reduce((a,s)=>a+s.tech,0),all?'Across 17 branches':BR(S.branch).em,'car','#1f4fbf')}
+  ${kpi('Bay use '+L,util+'%','Target 85%','clock','#0e9488',util>=85?'up':'')}
+  ${kpi('Active customers',fmt(z.active),'Visited in the last 12 months','users','#6d4fd8')}
+  ${kpi('New customers '+L,fmt(z.newC),z.ret+'% of cars were returning customers','plus','#12a150','up')}
+  ${kpi('Average spend',can('price')?'AED '+fmt(avg):'—','Per car, invoiced','cash','#EC3542')}
+ </div>`;
+ const sort=S.bsort||'sales';const rows=st.slice().sort((a,b)=>sort==='util'?b.util-a.util:sort==='rating'?b.rating-a.rating:sort==='avg'?b.avg-a.avg:BSTAT[b.b][0]-BSTAT[a.b][0]);
+ if(all){h+=`<div class="card"><div class="row" style="padding:16px 18px 0"><h3 style="margin:0">Branch by branch — ${L}</h3><span class="sp"></span><span class="small muted">Sort by</span>
+  <div class="tabs">${[['sales','Sales'],['util','Bay use'],['avg','Avg spend'],['rating','Rating']].map(([k,l])=>`<button class="${sort===k?'on':''}" onclick="S.bsort='${k}';render()">${l}</button>`).join('')}</div></div>
+  <div class="tw"><table class="t" id="brtbl"><thead><tr><th>Branch</th><th class="num">Bays</th><th class="num">Technicians</th>${can('price')?'<th class="num">Sales</th>':''}<th class="num">Cars in</th><th class="num">On time</th><th class="num">Bay use</th><th class="num">Active customers</th><th class="num">New</th><th class="num">Returning</th>${can('price')?'<th class="num">Avg spend</th>':''}<th class="num">Rating</th></tr></thead><tbody>
+  ${rows.map(s=>`<tr style="cursor:pointer" onclick="brRowGo('${s.b}')"><td style="white-space:nowrap"><b>${BR(s.b).name}</b><div class="tiny muted">${BR(s.b).em}</div></td><td class="num">${BR(s.b).bays}</td><td class="num">${s.tech}</td>${can('price')?`<td class="num b">AED ${fmt(sales(s.b))}</td>`:''}<td class="num">${fmt(cin(s.b))}</td><td class="num">${BSTAT[s.b][3]}%</td><td class="num"><span class="chip ${s.util>=85?'g':s.util>=75?'b':'a'}">${s.util}%</span></td><td class="num">${fmt(s.active)}</td><td class="num">${fmt(s.newC)}</td><td class="num">${s.ret}%</td>${can('price')?`<td class="num">AED ${fmt(s.avg)}</td>`:''}<td class="num">★ ${s.rating} <span class="tiny muted">${s.reviews}</span></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="tiny muted" style="margin-top:8px">Click a branch to open its own dashboard.</div>`}
+ else{const s=st[0],B=BR(s.b);const avgAll=custSum(BRANCHES.map(b=>custStat(b.id,p)));const cmp=(l,v,a,u='')=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line2)"><span>${l}</span><span class="sp"></span><b>${v}${u}</b><span class="tiny muted" style="width:120px;text-align:right">all branches ${a}${u}</span></div>`;
+  const allAvg=Math.round(BRANCHES.reduce((a,b)=>a+BSTAT[b.id][0],0)/BRANCHES.reduce((a,b)=>a+BSTAT[b.id][1],0));
+  const allUtil=Math.round(BRANCHES.reduce((a,b)=>a+custStat(b.id,p).util,0)/17),allOt=Math.round(BRANCHES.reduce((a,b)=>a+BSTAT[b.id][3],0)/17);
+  h+=`<div class="grid g2"><div class="card pad"><h3>Branch details</h3>${[['Emirate',B.em],['Bays',B.bays],['Technicians',s.tech],['Opening hours','Sat–Thu 7:30–21:00 · Fri 14:00–21:00'],['Google rating','★ '+s.rating+' ('+s.reviews+' reviews)'],['Job card series',B.id+'-'+String(B.next).padStart(4,'0')]].map(([k,v])=>`<div class="row small" style="padding:6px 0;border-bottom:1px solid var(--line2)"><span class="muted">${k}</span><span class="sp"></span><b>${v}</b></div>`).join('')}</div>
+  <div class="card pad"><h3>Compared with all branches — ${L}</h3>${cmp('On-time delivery',BSTAT[s.b][3],allOt,'%')}${cmp('Bay use',s.util,allUtil,'%')}${cmp('Returning customers',s.ret,avgAll.ret,'%')}${can('price')?cmp('Average spend','AED '+fmt(s.avg),'AED '+fmt(allAvg)):''}${cmp('Enquiry conversion',enqStat(s.b,p).cpct,enqSum(BRANCHES.map(b=>enqStat(b.id,p))).cpct,'%')}</div></div>`}
+ return h}
+
+const _dash11=SCREENS.dash;SCREENS.dash=()=>{const v=S.dview||'ovr';if(v==='enq')return dashEnq();if(v==='cust')return dashCust();return afterPh(_dash11(),dviewTabs())};
+
+/* presenter notes & how-to */
+if(typeof EXPLAIN!=='undefined'&&EXPLAIN.dash){EXPLAIN.dash.say+=' Two more views sit beside the overview: Enquiries by branch (where enquiries come from, how many turn into jobs, why they are lost) and Branch details (bays, technicians, sales, bay use, customers and rating for every branch).';
+ EXPLAIN.dash.pts.push('Enquiries by branch: source, conversion, lost reasons, first-reply time','Branch details: bays, technicians, sales, bay use, returning customers, rating');
+ EXPLAIN.dash.try.push('Open Enquiries by branch and sort by Best conversion','Open Branch details, sort by Bay use, then click a branch')}
+HOWTO.unshift(['See enquiries by branch','Owner dashboard › Enquiries by branch: source, conversion, lost reasons, reply time','owner',"S.branch='ALL';S.dview='enq';go('dash')",'BO-1'],['See branch details','Owner dashboard › Branch details: bays, technicians, sales, bay use, customers and rating per branch','owner',"S.branch='ALL';S.dview='cust';go('dash')",'BO-1']);
 
 /* ---------- boot ---------- */
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){S.modal=null;S.drawer=null;renderOverlay()}});
